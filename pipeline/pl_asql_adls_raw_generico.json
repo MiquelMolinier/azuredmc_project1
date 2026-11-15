@@ -1,0 +1,100 @@
+{
+	"name": "pl_asql_adls_raw_generico",
+	"properties": {
+		"activities": [
+			{
+				"name": "copy_asql_adls_generico",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "AzureSqlSource",
+						"queryTimeout": "02:00:00",
+						"partitionOption": "None"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_asql_salesLt_generico",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_tableName": {
+								"value": "@pipeline().parameters.p_tableName",
+								"type": "Expression"
+							},
+							"p_schemaName": {
+								"value": "@pipeline().parameters.p_schemaName",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_adls_raw_parquet_particionado",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_origen": {
+								"value": "@pipeline().parameters.p_schemaName",
+								"type": "Expression"
+							},
+							"p_entidad": {
+								"value": "@pipeline().parameters.p_tableName",
+								"type": "Expression"
+							},
+							"p_anio": {
+								"value": "@formatDateTime(utcNow(),'yyyy')",
+								"type": "Expression"
+							},
+							"p_mes": {
+								"value": "@formatDateTime(utcNow(),'MM')",
+								"type": "Expression"
+							},
+							"p_dia": {
+								"value": "@formatDateTime(utcNow(),'dd')",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"p_tableName": {
+				"type": "string"
+			},
+			"p_schemaName": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-11-14T02:57:42Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

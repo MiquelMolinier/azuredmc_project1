@@ -1,0 +1,58 @@
+{
+	"name": "ds_adls_landing_metas_csv",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_adls_datalake",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "metas_tiendas_novaretail.csv",
+				"folderPath": "landing/externos/metas_tiendas",
+				"fileSystem": "datalake"
+			},
+			"columnDelimiter": ",",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "meta_id",
+				"type": "String"
+			},
+			{
+				"name": "t_id",
+				"type": "String"
+			},
+			{
+				"name": "anio",
+				"type": "String"
+			},
+			{
+				"name": "mes",
+				"type": "String"
+			},
+			{
+				"name": "categoria",
+				"type": "String"
+			},
+			{
+				"name": "meta_monto",
+				"type": "String"
+			},
+			{
+				"name": "fecha_corte",
+				"type": "String"
+			},
+			{
+				"name": "activo",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

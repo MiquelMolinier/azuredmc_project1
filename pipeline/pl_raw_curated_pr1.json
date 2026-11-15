@@ -1,0 +1,145 @@
+{
+	"name": "pl_raw_curated_pr1",
+	"properties": {
+		"activities": [
+			{
+				"name": "LoadTablesPg",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@createArray('cargo','empleado','departamento')",
+						"type": "Expression"
+					},
+					"isSequential": false,
+					"batchCount": 2,
+					"activities": [
+						{
+							"name": "pl_load_raw_pg_adls",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_load_raw_pg_adls_pr1",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"p_schema": "rrhh",
+									"p_table": {
+										"value": "@item()",
+										"type": "Expression"
+									},
+									"p_layer": "raw"
+								}
+							}
+						}
+					]
+				}
+			},
+			{
+				"name": "df_load_raw_csv_adls",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_load_raw_csv_adls_pr1",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"outputEmployeeCommission": {
+								"p_layer": "raw",
+								"p_origin": "csv",
+								"p_entity": "employee_commission"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "df_raw_curated",
+				"type": "ExecuteDataFlow",
+				"dependsOn": [
+					{
+						"activity": "LoadTablesPg",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					},
+					{
+						"activity": "df_load_raw_csv_adls",
+						"dependencyConditions": [
+							"Succeeded"
+						]
+					}
+				],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_raw_curated_pr1",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"Title": {
+								"p_layer": "raw",
+								"p_origin": "rrhh",
+								"p_entity": "cargo"
+							},
+							"employee": {
+								"p_layer": "raw",
+								"p_origin": "rrhh",
+								"p_entity": "empleado"
+							},
+							"department": {
+								"p_layer": "raw",
+								"p_origin": "rrhh",
+								"p_entity": "departamento"
+							},
+							"commission": {
+								"p_layer": "raw",
+								"p_origin": "csv",
+								"p_entity": "employee_commission"
+							},
+							"sink": {
+								"p_layer": "curated",
+								"p_origin": "parquet",
+								"p_entity": "final_commission"
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2026-11-15T18:41:07Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

@@ -1,0 +1,68 @@
+{
+	"name": "df_ingesta_csv_metas_raw",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_adls_landing_metas_csv",
+						"type": "DatasetReference"
+					},
+					"name": "OrigenMetasCSV"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_adls_raw_parquet_particionado",
+						"type": "DatasetReference"
+					},
+					"name": "DestinoRawMetasParquet"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "FiltrarRegistrosValidos"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          meta_id as string,",
+				"          t_id as string,",
+				"          anio as string,",
+				"          mes as string,",
+				"          categoria as string,",
+				"          meta_monto as string,",
+				"          fecha_corte as string,",
+				"          activo as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> OrigenMetasCSV",
+				"OrigenMetasCSV derive(meta_id = toInteger(meta_id),",
+				"          t_id = toInteger(t_id),",
+				"          anio = toInteger(anio),",
+				"          mes = toInteger(mes),",
+				"          meta_monto = toDecimal(meta_monto, 12, 2),",
+				"          activo = toBoolean(activo),",
+				"          fecha_ingesta_utc = currentTimestamp()) ~> derivedColumn1",
+				"derivedColumn1 filter(not(isNull(meta_id))&&not(isNull(t_id))) ~> FiltrarRegistrosValidos",
+				"FiltrarRegistrosValidos sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     partitionFileNames:['metas_tiendas.parquet'],",
+				"     truncate: true,",
+				"     umask: 0755,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> DestinoRawMetasParquet"
+			]
+		}
+	}
+}

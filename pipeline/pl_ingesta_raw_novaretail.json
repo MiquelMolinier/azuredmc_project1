@@ -1,0 +1,179 @@
+{
+	"name": "pl_ingesta_raw_novaretail",
+	"properties": {
+		"activities": [
+			{
+				"name": "df_ingesta_csv_metas_raw",
+				"type": "ExecuteDataFlow",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_ingesta_csv_metas_raw",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"DestinoRawMetasParquet": {
+								"p_origen": "csv",
+								"p_entidad": "metas_tiendas",
+								"p_anio": {
+									"value": "@formatDateTime(utcNow(),'yyyy')",
+									"type": "Expression"
+								},
+								"p_mes": {
+									"value": "@formatDateTime(utcNow(),'MM')",
+									"type": "Expression"
+								},
+								"p_dia": {
+									"value": "@formatDateTime(utcNow(),'dd')",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine"
+				}
+			},
+			{
+				"name": "df_ingesta_incremental_erp_venta",
+				"type": "ExecuteDataFlow",
+				"state": "Inactive",
+				"onInactiveMarkAs": "Succeeded",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 1,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"dataflow": {
+						"referenceName": "df_ingesta_incremental_erp_venta",
+						"type": "DataFlowReference",
+						"datasetParameters": {
+							"DestinoRawVentaParquet": {
+								"p_origen": "erp",
+								"p_entidad": "SalesLT.SalesOrderHeader",
+								"p_anio": {
+									"value": "@formatDateTime(utcNow(),'yyyy')",
+									"type": "Expression"
+								},
+								"p_mes": {
+									"value": "@formatDateTime(utcNow(),'MM')",
+									"type": "Expression"
+								},
+								"p_dia": {
+									"value": "@formatDateTime(utcNow(),'dd')",
+									"type": "Expression"
+								}
+							}
+						}
+					},
+					"compute": {
+						"coreCount": 8,
+						"computeType": "General"
+					},
+					"traceLevel": "Fine",
+					"continuationSettings": {
+						"customizedCheckpointKey": "253c96c1-2557-43e3-9c85-626b6fc039ab"
+					}
+				}
+			},
+			{
+				"name": "Execute Pipeline1",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_asql_adls_raw_generico",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"p_tableName": "Customer",
+						"p_schemaName": "SalesLT"
+					}
+				}
+			},
+			{
+				"name": "Execute Pipeline2",
+				"type": "ExecutePipeline",
+				"dependsOn": [],
+				"policy": {
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"pipeline": {
+						"referenceName": "pl_asql_adls_raw_generico",
+						"type": "PipelineReference"
+					},
+					"waitOnCompletion": true,
+					"parameters": {
+						"p_tableName": "CustomerAddress",
+						"p_schemaName": "SalesLT"
+					}
+				}
+			},
+			{
+				"name": "ForEach1",
+				"type": "ForEach",
+				"dependsOn": [],
+				"userProperties": [],
+				"typeProperties": {
+					"items": {
+						"value": "@createArray('Product', 'ProductCategory', 'ProductDescription', 'ProductModel')\n",
+						"type": "Expression"
+					},
+					"batchCount": 2,
+					"activities": [
+						{
+							"name": "Execute Pipeline3",
+							"type": "ExecutePipeline",
+							"dependsOn": [],
+							"policy": {
+								"secureInput": false
+							},
+							"userProperties": [],
+							"typeProperties": {
+								"pipeline": {
+									"referenceName": "pl_asql_adls_raw_generico",
+									"type": "PipelineReference"
+								},
+								"waitOnCompletion": true,
+								"parameters": {
+									"p_tableName": {
+										"value": "@item()",
+										"type": "Expression"
+									},
+									"p_schemaName": "SalesLT"
+								}
+							}
+						}
+					]
+				}
+			}
+		],
+		"annotations": [],
+		"lastPublishTime": "2026-11-14T03:08:53Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

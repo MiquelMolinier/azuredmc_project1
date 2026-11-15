@@ -1,0 +1,59 @@
+{
+	"name": "df_load_raw_csv_adls_pr1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_adls_landing_commission_csv",
+						"type": "DatasetReference"
+					},
+					"name": "inputEmployeeCommission"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_adls_parquet_pr1",
+						"type": "DatasetReference"
+					},
+					"name": "outputEmployeeCommission"
+				}
+			],
+			"transformations": [
+				{
+					"name": "select"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          empleado_id as string,",
+				"          {Nombre y Apellido} as string,",
+				"          {Comisión} as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false) ~> inputEmployeeCommission",
+				"inputEmployeeCommission select(mapColumn(",
+				"          employee_id = empleado_id,",
+				"          full_name = {Nombre y Apellido},",
+				"          commission = {Comisión}",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select",
+				"select sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     partitionFileNames:['employee_commission.parquet'],",
+				"     truncate: true,",
+				"     umask: 0755,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> outputEmployeeCommission"
+			]
+		}
+	}
+}

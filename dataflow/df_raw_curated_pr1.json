@@ -1,0 +1,170 @@
+{
+	"name": "df_raw_curated_pr1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_adls_parquet_pr1",
+						"type": "DatasetReference"
+					},
+					"name": "Title"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_adls_parquet_pr1",
+						"type": "DatasetReference"
+					},
+					"name": "employee"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_adls_parquet_pr1",
+						"type": "DatasetReference"
+					},
+					"name": "department"
+				},
+				{
+					"dataset": {
+						"referenceName": "ds_adls_parquet_pr1",
+						"type": "DatasetReference"
+					},
+					"name": "commission"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "ds_adls_parquet_pr1",
+						"type": "DatasetReference"
+					},
+					"name": "sink"
+				}
+			],
+			"transformations": [
+				{
+					"name": "cleanEmployee"
+				},
+				{
+					"name": "joinEmployeeDeparment"
+				},
+				{
+					"name": "cleanCommission"
+				},
+				{
+					"name": "joinEmployeeTitle"
+				},
+				{
+					"name": "joinEmployeeCommission"
+				},
+				{
+					"name": "calculateCommission1"
+				},
+				{
+					"name": "calculateCommission2"
+				},
+				{
+					"name": "calculateCommission3"
+				},
+				{
+					"name": "select"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          cod_cargo as string,",
+				"          des_cargo as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> Title",
+				"source(output(",
+				"          empleado_id as integer,",
+				"          tip_documento as string,",
+				"          num_documento as string,",
+				"          nom_empleado as string,",
+				"          ape_empleado as string,",
+				"          cod_cargo as string,",
+				"          cod_departamento as string,",
+				"          mnt_salario as decimal(38,18),",
+				"          mnt_tope_comision as decimal(38,18)",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> employee",
+				"source(output(",
+				"          cod_departamento as string,",
+				"          des_departamento as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> department",
+				"source(output(",
+				"          employee_id as string,",
+				"          full_name as string,",
+				"          commission as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     format: 'parquet') ~> commission",
+				"employee derive(mnt_salario = toDecimal(mnt_salario, 18, 2),",
+				"          mnt_tope_comision = toDecimal(mnt_tope_comision, 18, 2),",
+				"          documento = concat(tip_documento, '-', num_documento),",
+				"          nombre_completo = concat(nom_empleado, '-', ape_empleado)) ~> cleanEmployee",
+				"cleanEmployee, department join(employee@cod_departamento == department@cod_departamento,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinEmployeeDeparment",
+				"commission derive(employee_id = toInteger(employee_id),",
+				"          commission = toDecimal(commission, 18, 2)) ~> cleanCommission",
+				"joinEmployeeDeparment, Title join(employee@cod_cargo == Title@cod_cargo,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinEmployeeTitle",
+				"joinEmployeeTitle, cleanCommission join(empleado_id == employee_id,",
+				"     joinType:'left',",
+				"     matchType:'exact',",
+				"     ignoreSpaces: false,",
+				"     broadcast: 'auto')~> joinEmployeeCommission",
+				"joinEmployeeCommission derive(tope_aplicable = least(mnt_salario, mnt_tope_comision),",
+				"          mnt_comision_bruta = case(isNull(commission), toDecimal(0, 18, 2), commission)) ~> calculateCommission1",
+				"calculateCommission1 derive(mnt_comision_final = case(mnt_comision_bruta > tope_aplicable, tope_aplicable, mnt_comision_bruta),",
+				"          ind_tope_aplicado = case(mnt_comision_bruta > tope_aplicable, 'SI', 'NO')) ~> calculateCommission2",
+				"calculateCommission2 derive(mnt_total_pagar = mnt_salario + mnt_comision_final) ~> calculateCommission3",
+				"calculateCommission3 select(mapColumn(",
+				"          empleado_id,",
+				"          documento,",
+				"          nombre_completo,",
+				"          des_departamento,",
+				"          des_cargo,",
+				"          mnt_salario,",
+				"          mnt_tope_comision,",
+				"          mnt_comision_bruta,",
+				"          mnt_comision_final,",
+				"          ind_tope_aplicado,",
+				"          mnt_total_pagar",
+				"     ),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> select",
+				"select sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     format: 'parquet',",
+				"     partitionFileNames:['final_commission.parquet'],",
+				"     truncate: true,",
+				"     umask: 0755,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     partitionBy('hash', 1)) ~> sink"
+			]
+		}
+	}
+}

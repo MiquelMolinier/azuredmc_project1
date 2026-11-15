@@ -1,0 +1,38 @@
+{
+	"name": "ds_adls_landing_commission_csv",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_adls_datalake_pr1",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "DelimitedText",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"fileName": "ComisionEmpleados_V1_202610.csv",
+				"folderPath": "landing/external",
+				"fileSystem": "lakehouse"
+			},
+			"columnDelimiter": ";",
+			"escapeChar": "\\",
+			"firstRowAsHeader": true,
+			"quoteChar": "\""
+		},
+		"schema": [
+			{
+				"name": "empleado_id",
+				"type": "String"
+			},
+			{
+				"name": "Nombre y Apellido",
+				"type": "String"
+			},
+			{
+				"name": "Comisión",
+				"type": "String"
+			}
+		]
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

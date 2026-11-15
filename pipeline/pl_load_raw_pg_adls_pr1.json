@@ -1,0 +1,94 @@
+{
+	"name": "pl_load_raw_pg_adls_pr1",
+	"properties": {
+		"activities": [
+			{
+				"name": "copy_pg_adls",
+				"type": "Copy",
+				"dependsOn": [],
+				"policy": {
+					"timeout": "0.12:00:00",
+					"retry": 0,
+					"retryIntervalInSeconds": 30,
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"source": {
+						"type": "PostgreSqlV2Source",
+						"queryTimeout": "02:00:00"
+					},
+					"sink": {
+						"type": "ParquetSink",
+						"storeSettings": {
+							"type": "AzureBlobFSWriteSettings"
+						},
+						"formatSettings": {
+							"type": "ParquetWriteSettings"
+						}
+					},
+					"enableStaging": false,
+					"translator": {
+						"type": "TabularTranslator",
+						"typeConversion": true,
+						"typeConversionSettings": {
+							"allowDataTruncation": true,
+							"treatBooleanAsNumber": false
+						}
+					}
+				},
+				"inputs": [
+					{
+						"referenceName": "ds_pg_rrhh_tmpl_pr1",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_schema": {
+								"value": "@pipeline().parameters.p_schema",
+								"type": "Expression"
+							},
+							"p_table": {
+								"value": "@pipeline().parameters.p_table",
+								"type": "Expression"
+							}
+						}
+					}
+				],
+				"outputs": [
+					{
+						"referenceName": "ds_adls_parquet_pr1",
+						"type": "DatasetReference",
+						"parameters": {
+							"p_layer": {
+								"value": "@pipeline().parameters.p_layer",
+								"type": "Expression"
+							},
+							"p_origin": {
+								"value": "@pipeline().parameters.p_schema",
+								"type": "Expression"
+							},
+							"p_entity": {
+								"value": "@pipeline().parameters.p_table",
+								"type": "Expression"
+							}
+						}
+					}
+				]
+			}
+		],
+		"parameters": {
+			"p_schema": {
+				"type": "string"
+			},
+			"p_table": {
+				"type": "string"
+			},
+			"p_layer": {
+				"type": "string"
+			}
+		},
+		"annotations": [],
+		"lastPublishTime": "2026-11-15T18:29:27Z"
+	},
+	"type": "Microsoft.DataFactory/factories/pipelines"
+}

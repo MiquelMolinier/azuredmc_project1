@@ -1,0 +1,46 @@
+{
+	"name": "ds_adls_raw_parquet_particionado",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_adls_datalake",
+			"type": "LinkedServiceReference"
+		},
+		"parameters": {
+			"p_origen": {
+				"type": "string",
+				"defaultValue": "csv"
+			},
+			"p_entidad": {
+				"type": "string",
+				"defaultValue": "metas_tiendas"
+			},
+			"p_anio": {
+				"type": "string",
+				"defaultValue": "2026"
+			},
+			"p_mes": {
+				"type": "string",
+				"defaultValue": "11"
+			},
+			"p_dia": {
+				"type": "string",
+				"defaultValue": "09"
+			}
+		},
+		"annotations": [],
+		"type": "Parquet",
+		"typeProperties": {
+			"location": {
+				"type": "AzureBlobFSLocation",
+				"folderPath": {
+					"value": "@concat('raw/', dataset().p_origen,'/',dataset().p_entidad,'/',  dataset().p_anio,'/',dataset().p_mes,'/',dataset().p_dia)",
+					"type": "Expression"
+				},
+				"fileSystem": "datalake"
+			},
+			"compressionCodec": "snappy"
+		},
+		"schema": []
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

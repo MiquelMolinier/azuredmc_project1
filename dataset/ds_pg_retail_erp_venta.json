@@ -1,0 +1,17 @@
+{
+	"name": "ds_pg_retail_erp_venta",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "ls_pg_retail_erp_df",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "PostgreSqlV2Table",
+		"schema": [],
+		"typeProperties": {
+			"schema": "erp",
+			"table": "venta"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}

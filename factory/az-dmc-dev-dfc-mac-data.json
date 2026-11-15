@@ -1,0 +1,15 @@
+{
+	"name": "az-dmc-dev-dfc-mac-data",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "centralus",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "b1fe5ae1-f918-45de-91e2-5dff48da13bd",
+		"tenantId": "3e88272e-29da-4007-a8c1-2b5326871f07"
+	}
+}
