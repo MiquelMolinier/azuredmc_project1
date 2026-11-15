@@ -22,7 +22,7 @@ flowchart TD
 
 The parent pipeline takes no runtime parameters. Each PostgreSQL child run receives `p_schema = rrhh`, `p_table = @item()`, and `p_layer = raw`.
 
-| Data flow | Dataset binding | `p_layer` | `p_origin` | `p_entity` |
+| Data flow | Data flow source or sink | `p_layer` | `p_origin` | `p_entity` |
 | --- | --- | --- | --- | --- |
 | `df_load_raw_csv_adls_pr1` | `outputEmployeeCommission` | `raw` | `csv` | `employee_commission` |
 | `df_raw_curated_pr1` | `Title` | `raw` | `rrhh` | `cargo` |
@@ -31,7 +31,58 @@ The parent pipeline takes no runtime parameters. Each PostgreSQL child run recei
 | `df_raw_curated_pr1` | `commission` | `raw` | `csv` | `employee_commission` |
 | `df_raw_curated_pr1` | `sink` | `curated` | `parquet` | `final_commission` |
 
-The referenced datasets resolve the ADLS Gen2 paths from these parameters. The definition of `df_raw_curated_pr1` contains the joins, transformations, and output schema.
+The pipeline passes these dataset parameters by source or sink name. Each listed source or sink references the `ds_adls_parquet_pr1` dataset, which uses the parameters to resolve its ADLS Gen2 location.
+
+## CSV to raw — `df_load_raw_csv_adls_pr1`
+
+The `inputEmployeeCommission` source reads `ds_adls_landing_commission_csv`. The `select` transformation renames the three projected fields and keeps them as strings in the raw layer.
+
+| CSV field | Raw Parquet field |
+| --- | --- |
+| `empleado_id` | `employee_id` |
+| `Nombre y Apellido` | `full_name` |
+| `Comisión` | `commission` |
+
+The `outputEmployeeCommission` sink uses `ds_adls_parquet_pr1` and writes `employee_commission.parquet`.
+
+## Raw to curated — `df_raw_curated_pr1`
+
+All four sources and the curated sink use `ds_adls_parquet_pr1` with the bindings listed above.
+
+- `cleanEmployee` converts `mnt_salario` and `mnt_tope_comision` from `decimal(38,18)` to `decimal(18,2)`. It builds `documento` as `tip_documento-num_documento` and `nombre_completo` as `nom_empleado-ape_empleado`.
+- `cleanCommission` converts `employee_id` to integer and `commission` to `decimal(18,2)`.
+
+| Order | Right-side stream | Left join key |
+| --- | --- | --- |
+| 1 | `department` | `employee@cod_departamento == department@cod_departamento` |
+| 2 | `Title` | `employee@cod_cargo == Title@cod_cargo` |
+| 3 | `cleanCommission` | `empleado_id == employee_id` |
+
+The joins use exact matching and preserve employees without a match. Multiple commission rows for the same employee ID can produce multiple output rows for that employee.
+
+| Field | Calculation |
+| --- | --- |
+| `tope_aplicable` | `least(mnt_salario, mnt_tope_comision)` |
+| `mnt_comision_bruta` | `commission`, with null replaced by decimal zero |
+| `mnt_comision_final` | Use `tope_aplicable` when gross commission exceeds it. Otherwise use gross commission. |
+| `ind_tope_aplicado` | `SI` when gross commission exceeds the cap. Otherwise `NO`, including equality. |
+| `mnt_total_pagar` | `mnt_salario + mnt_comision_final` |
+
+The final `select` writes these columns in order to `final_commission.parquet`.
+
+1. `empleado_id`
+2. `documento`
+3. `nombre_completo`
+4. `des_departamento`
+5. `des_cargo`
+6. `mnt_salario`
+7. `mnt_tope_comision`
+8. `mnt_comision_bruta`
+9. `mnt_comision_final`
+10. `ind_tope_aplicado`
+11. `mnt_total_pagar`
+
+Both sinks use one hash partition, an explicit Parquet filename, and `truncate: true`. Verify the target paths before rerunning because the sinks can clear existing output. Both flows allow schema drift, disable schema validation, and require their source files to exist.
 
 ## Run and verify
 
