@@ -1,0 +1,1558 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "az-dmc-dev-dfc-mac-data"
+		},
+		"ls_adls_datalake_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'ls_adls_datalake'"
+		},
+		"ls_adls_datalake_pr1_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'ls_adls_datalake_pr1'"
+		},
+		"ls_asql_retail_advWorks_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'ls_asql_retail_advWorks'"
+		},
+		"ls_pg_retail_erp_df_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'ls_pg_retail_erp_df'"
+		},
+		"ls_pg_rrhh_pr1_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'ls_pg_rrhh_pr1'"
+		},
+		"ls_adls_datalake_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://azdmcdevstgmac.dfs.core.windows.net/"
+		},
+		"ls_adls_datalake_pr1_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://azdmcdevstgmac.dfs.core.windows.net/"
+		},
+		"ls_asql_retail_advWorks_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "az-dmc-dev-sql-ade-data-mac.database.windows.net"
+		},
+		"ls_asql_retail_advWorks_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "az-dmc-dev-sqldb-ade-data"
+		},
+		"ls_asql_retail_advWorks_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "dmc-azuresql-admin"
+		},
+		"ls_pg_retail_erp_df_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "mgg.vps.webdock.cloud"
+		},
+		"ls_pg_retail_erp_df_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "retail_erp_db"
+		},
+		"ls_pg_retail_erp_df_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "usr_student_azure"
+		},
+		"ls_pg_rrhh_pr1_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "mgg.vps.webdock.cloud"
+		},
+		"ls_pg_rrhh_pr1_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "dmc"
+		},
+		"ls_pg_rrhh_pr1_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "usr_ro_dmc_rrhh_estudiantes"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_asql_adls_raw_generico')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "copy_asql_adls_generico",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "AzureSqlSource",
+								"queryTimeout": "02:00:00",
+								"partitionOption": "None"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_asql_salesLt_generico",
+								"type": "DatasetReference",
+								"parameters": {
+									"p_tableName": {
+										"value": "@pipeline().parameters.p_tableName",
+										"type": "Expression"
+									},
+									"p_schemaName": {
+										"value": "@pipeline().parameters.p_schemaName",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_adls_raw_parquet_particionado",
+								"type": "DatasetReference",
+								"parameters": {
+									"p_origen": {
+										"value": "@pipeline().parameters.p_schemaName",
+										"type": "Expression"
+									},
+									"p_entidad": {
+										"value": "@pipeline().parameters.p_tableName",
+										"type": "Expression"
+									},
+									"p_anio": {
+										"value": "@formatDateTime(utcNow(),'yyyy')",
+										"type": "Expression"
+									},
+									"p_mes": {
+										"value": "@formatDateTime(utcNow(),'MM')",
+										"type": "Expression"
+									},
+									"p_dia": {
+										"value": "@formatDateTime(utcNow(),'dd')",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"p_tableName": {
+						"type": "string"
+					},
+					"p_schemaName": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-11-14T02:57:42Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_asql_salesLt_generico')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_raw_parquet_particionado')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_ingesta_raw_novaretail')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "df_ingesta_csv_metas_raw",
+						"type": "ExecuteDataFlow",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_ingesta_csv_metas_raw",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"OrigenMetasCSV": {},
+									"DestinoRawMetasParquet": {
+										"p_origen": "csv",
+										"p_entidad": "metas_tiendas",
+										"p_anio": {
+											"value": "@formatDateTime(utcNow(),'yyyy')",
+											"type": "Expression"
+										},
+										"p_mes": {
+											"value": "@formatDateTime(utcNow(),'MM')",
+											"type": "Expression"
+										},
+										"p_dia": {
+											"value": "@formatDateTime(utcNow(),'dd')",
+											"type": "Expression"
+										}
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "df_ingesta_incremental_erp_venta",
+						"type": "ExecuteDataFlow",
+						"state": "Inactive",
+						"onInactiveMarkAs": "Succeeded",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 1,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_ingesta_incremental_erp_venta",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"OrigenErpVenta": {},
+									"DestinoRawVentaParquet": {
+										"p_origen": "erp",
+										"p_entidad": "SalesLT.SalesOrderHeader",
+										"p_anio": {
+											"value": "@formatDateTime(utcNow(),'yyyy')",
+											"type": "Expression"
+										},
+										"p_mes": {
+											"value": "@formatDateTime(utcNow(),'MM')",
+											"type": "Expression"
+										},
+										"p_dia": {
+											"value": "@formatDateTime(utcNow(),'dd')",
+											"type": "Expression"
+										}
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine",
+							"continuationSettings": {
+								"customizedCheckpointKey": "253c96c1-2557-43e3-9c85-626b6fc039ab"
+							}
+						}
+					},
+					{
+						"name": "Execute Pipeline1",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_asql_adls_raw_generico",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"p_tableName": "Customer",
+								"p_schemaName": "SalesLT"
+							}
+						}
+					},
+					{
+						"name": "Execute Pipeline2",
+						"type": "ExecutePipeline",
+						"dependsOn": [],
+						"policy": {
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"pipeline": {
+								"referenceName": "pl_asql_adls_raw_generico",
+								"type": "PipelineReference"
+							},
+							"waitOnCompletion": true,
+							"parameters": {
+								"p_tableName": "CustomerAddress",
+								"p_schemaName": "SalesLT"
+							}
+						}
+					},
+					{
+						"name": "ForEach1",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@createArray('Product', 'ProductCategory', 'ProductDescription', 'ProductModel')\n",
+								"type": "Expression"
+							},
+							"batchCount": 2,
+							"activities": [
+								{
+									"name": "Execute Pipeline3",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "pl_asql_adls_raw_generico",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"p_tableName": {
+												"value": "@item()",
+												"type": "Expression"
+											},
+											"p_schemaName": "SalesLT"
+										}
+									}
+								}
+							]
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-11-14T03:08:53Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_ingesta_csv_metas_raw')]",
+				"[concat(variables('factoryId'), '/dataflows/df_ingesta_incremental_erp_venta')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_asql_adls_raw_generico')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_load_raw_pg_adls_pr1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "copy_pg_adls",
+						"type": "Copy",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"source": {
+								"type": "PostgreSqlV2Source",
+								"queryTimeout": "02:00:00"
+							},
+							"sink": {
+								"type": "ParquetSink",
+								"storeSettings": {
+									"type": "AzureBlobFSWriteSettings"
+								},
+								"formatSettings": {
+									"type": "ParquetWriteSettings"
+								}
+							},
+							"enableStaging": false,
+							"translator": {
+								"type": "TabularTranslator",
+								"typeConversion": true,
+								"typeConversionSettings": {
+									"allowDataTruncation": true,
+									"treatBooleanAsNumber": false
+								}
+							}
+						},
+						"inputs": [
+							{
+								"referenceName": "ds_pg_rrhh_tmpl_pr1",
+								"type": "DatasetReference",
+								"parameters": {
+									"p_schema": {
+										"value": "@pipeline().parameters.p_schema",
+										"type": "Expression"
+									},
+									"p_table": {
+										"value": "@pipeline().parameters.p_table",
+										"type": "Expression"
+									}
+								}
+							}
+						],
+						"outputs": [
+							{
+								"referenceName": "ds_adls_parquet_pr1",
+								"type": "DatasetReference",
+								"parameters": {
+									"p_layer": {
+										"value": "@pipeline().parameters.p_layer",
+										"type": "Expression"
+									},
+									"p_origin": {
+										"value": "@pipeline().parameters.p_schema",
+										"type": "Expression"
+									},
+									"p_entity": {
+										"value": "@pipeline().parameters.p_table",
+										"type": "Expression"
+									}
+								}
+							}
+						]
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"parameters": {
+					"p_schema": {
+						"type": "string"
+					},
+					"p_table": {
+						"type": "string"
+					},
+					"p_layer": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-11-15T18:29:27Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_pg_rrhh_tmpl_pr1')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_parquet_pr1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_raw_curated_pr1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "LoadTablesPg",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@createArray('cargo','empleado','departamento')",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 2,
+							"activities": [
+								{
+									"name": "pl_load_raw_pg_adls",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "pl_load_raw_pg_adls_pr1",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"p_schema": "rrhh",
+											"p_table": {
+												"value": "@item()",
+												"type": "Expression"
+											},
+											"p_layer": "raw"
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "df_load_raw_csv_adls",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_load_raw_csv_adls_pr1",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"inputEmployeeCommission": {},
+									"outputEmployeeCommission": {
+										"p_layer": "raw",
+										"p_origin": "csv",
+										"p_entity": "employee_commission"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "df_raw_curated",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "LoadTablesPg",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "df_load_raw_csv_adls",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_raw_curated_pr1",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"Title": {
+										"p_layer": "raw",
+										"p_origin": "rrhh",
+										"p_entity": "cargo"
+									},
+									"employee": {
+										"p_layer": "raw",
+										"p_origin": "rrhh",
+										"p_entity": "empleado"
+									},
+									"department": {
+										"p_layer": "raw",
+										"p_origin": "rrhh",
+										"p_entity": "departamento"
+									},
+									"commission": {
+										"p_layer": "raw",
+										"p_origin": "csv",
+										"p_entity": "employee_commission"
+									},
+									"sink": {
+										"p_layer": "curated",
+										"p_origin": "parquet",
+										"p_entity": "final_commission"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-11-15T18:41:07Z"
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/dataflows/df_load_raw_csv_adls_pr1')]",
+				"[concat(variables('factoryId'), '/dataflows/df_raw_curated_pr1')]",
+				"[concat(variables('factoryId'), '/pipelines/pl_load_raw_pg_adls_pr1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_landing_commission_csv')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adls_datalake_pr1",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "ComisionEmpleados_V1_202610.csv",
+						"folderPath": "landing/external",
+						"fileSystem": "lakehouse"
+					},
+					"columnDelimiter": ";",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "empleado_id",
+						"type": "String"
+					},
+					{
+						"name": "Nombre y Apellido",
+						"type": "String"
+					},
+					{
+						"name": "Comisión",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adls_datalake_pr1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_landing_metas_csv')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adls_datalake",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "DelimitedText",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"fileName": "metas_tiendas_novaretail.csv",
+						"folderPath": "landing/externos/metas_tiendas",
+						"fileSystem": "datalake"
+					},
+					"columnDelimiter": ",",
+					"escapeChar": "\\",
+					"firstRowAsHeader": true,
+					"quoteChar": "\""
+				},
+				"schema": [
+					{
+						"name": "meta_id",
+						"type": "String"
+					},
+					{
+						"name": "t_id",
+						"type": "String"
+					},
+					{
+						"name": "anio",
+						"type": "String"
+					},
+					{
+						"name": "mes",
+						"type": "String"
+					},
+					{
+						"name": "categoria",
+						"type": "String"
+					},
+					{
+						"name": "meta_monto",
+						"type": "String"
+					},
+					{
+						"name": "fecha_corte",
+						"type": "String"
+					},
+					{
+						"name": "activo",
+						"type": "String"
+					}
+				]
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adls_datalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_parquet_pr1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adls_datalake_pr1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"p_layer": {
+						"type": "string"
+					},
+					"p_origin": {
+						"type": "string"
+					},
+					"p_entity": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@concat(dataset().p_layer, '/', dataset().p_origin, '/', dataset().p_entity)",
+							"type": "Expression"
+						},
+						"fileSystem": "lakehouse"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adls_datalake_pr1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_adls_raw_parquet_particionado')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_adls_datalake",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"p_origen": {
+						"type": "string",
+						"defaultValue": "csv"
+					},
+					"p_entidad": {
+						"type": "string",
+						"defaultValue": "metas_tiendas"
+					},
+					"p_anio": {
+						"type": "string",
+						"defaultValue": "2026"
+					},
+					"p_mes": {
+						"type": "string",
+						"defaultValue": "11"
+					},
+					"p_dia": {
+						"type": "string",
+						"defaultValue": "09"
+					}
+				},
+				"annotations": [],
+				"type": "Parquet",
+				"typeProperties": {
+					"location": {
+						"type": "AzureBlobFSLocation",
+						"folderPath": {
+							"value": "@concat('raw/', dataset().p_origen,'/',dataset().p_entidad,'/',  dataset().p_anio,'/',dataset().p_mes,'/',dataset().p_dia)",
+							"type": "Expression"
+						},
+						"fileSystem": "datalake"
+					},
+					"compressionCodec": "snappy"
+				},
+				"schema": []
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_adls_datalake')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_asql_retail_ventas')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_asql_retail_advWorks",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [
+					{
+						"name": "SalesOrderID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "RevisionNumber",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "OrderDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "DueDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "ShipDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					},
+					{
+						"name": "Status",
+						"type": "tinyint",
+						"precision": 3
+					},
+					{
+						"name": "OnlineOrderFlag",
+						"type": "bit"
+					},
+					{
+						"name": "SalesOrderNumber",
+						"type": "nvarchar"
+					},
+					{
+						"name": "PurchaseOrderNumber",
+						"type": "nvarchar"
+					},
+					{
+						"name": "AccountNumber",
+						"type": "nvarchar"
+					},
+					{
+						"name": "CustomerID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ShipToAddressID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "BillToAddressID",
+						"type": "int",
+						"precision": 10
+					},
+					{
+						"name": "ShipMethod",
+						"type": "nvarchar"
+					},
+					{
+						"name": "CreditCardApprovalCode",
+						"type": "varchar"
+					},
+					{
+						"name": "SubTotal",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					},
+					{
+						"name": "TaxAmt",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					},
+					{
+						"name": "Freight",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					},
+					{
+						"name": "TotalDue",
+						"type": "money",
+						"precision": 19,
+						"scale": 4
+					},
+					{
+						"name": "Comment",
+						"type": "nvarchar"
+					},
+					{
+						"name": "rowguid",
+						"type": "uniqueidentifier"
+					},
+					{
+						"name": "ModifiedDate",
+						"type": "datetime",
+						"precision": 23,
+						"scale": 3
+					}
+				],
+				"typeProperties": {
+					"schema": "SalesLT",
+					"table": "SalesOrderHeader"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_asql_retail_advWorks')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_asql_salesLt_generico')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_asql_retail_advWorks",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"p_tableName": {
+						"type": "string",
+						"defaultValue": "SalesOrderHeader"
+					},
+					"p_schemaName": {
+						"type": "string",
+						"defaultValue": "SalesLT"
+					}
+				},
+				"annotations": [],
+				"type": "AzureSqlTable",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().p_schemaName",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().p_tableName",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_asql_retail_advWorks')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_pg_retail_erp_venta')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_pg_retail_erp_df",
+					"type": "LinkedServiceReference"
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"schema": "erp",
+					"table": "venta"
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_pg_retail_erp_df')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ds_pg_rrhh_tmpl_pr1')]",
+			"type": "Microsoft.DataFactory/factories/datasets",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"linkedServiceName": {
+					"referenceName": "ls_pg_rrhh_pr1",
+					"type": "LinkedServiceReference"
+				},
+				"parameters": {
+					"p_schema": {
+						"type": "string"
+					},
+					"p_table": {
+						"type": "string"
+					}
+				},
+				"annotations": [],
+				"type": "PostgreSqlV2Table",
+				"schema": [],
+				"typeProperties": {
+					"schema": {
+						"value": "@dataset().p_schema",
+						"type": "Expression"
+					},
+					"table": {
+						"value": "@dataset().p_table",
+						"type": "Expression"
+					}
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/linkedServices/ls_pg_rrhh_pr1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_adls_datalake')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "Dtalake",
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('ls_adls_datalake_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('ls_adls_datalake_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_adls_datalake_pr1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureBlobFS",
+				"typeProperties": {
+					"url": "[parameters('ls_adls_datalake_pr1_properties_typeProperties_url')]",
+					"accountKey": {
+						"type": "SecureString",
+						"value": "[parameters('ls_adls_datalake_pr1_accountKey')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_asql_retail_advWorks')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "AzureSqlDatabase",
+				"typeProperties": {
+					"server": "[parameters('ls_asql_retail_advWorks_properties_typeProperties_server')]",
+					"database": "[parameters('ls_asql_retail_advWorks_properties_typeProperties_database')]",
+					"encrypt": "mandatory",
+					"trustServerCertificate": false,
+					"authenticationType": "SQL",
+					"userName": "[parameters('ls_asql_retail_advWorks_properties_typeProperties_userName')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('ls_asql_retail_advWorks_password')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_pg_retail_erp_df')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"description": "DB ERP NovaRetail",
+				"annotations": [],
+				"type": "PostgreSqlV2",
+				"typeProperties": {
+					"server": "[parameters('ls_pg_retail_erp_df_properties_typeProperties_server')]",
+					"port": 5432,
+					"database": "[parameters('ls_pg_retail_erp_df_properties_typeProperties_database')]",
+					"username": "[parameters('ls_pg_retail_erp_df_properties_typeProperties_username')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('ls_pg_retail_erp_df_password')]"
+					},
+					"sslMode": 2,
+					"authenticationType": "Basic"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/ls_pg_rrhh_pr1')]",
+			"type": "Microsoft.DataFactory/factories/linkedServices",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"annotations": [],
+				"type": "PostgreSqlV2",
+				"typeProperties": {
+					"server": "[parameters('ls_pg_rrhh_pr1_properties_typeProperties_server')]",
+					"port": 5432,
+					"database": "[parameters('ls_pg_rrhh_pr1_properties_typeProperties_database')]",
+					"username": "[parameters('ls_pg_rrhh_pr1_properties_typeProperties_username')]",
+					"password": {
+						"type": "SecureString",
+						"value": "[parameters('ls_pg_rrhh_pr1_password')]"
+					},
+					"sslMode": 2,
+					"authenticationType": "Basic"
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_ingesta_csv_metas_raw')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_adls_landing_metas_csv",
+								"type": "DatasetReference"
+							},
+							"name": "OrigenMetasCSV"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_adls_raw_parquet_particionado",
+								"type": "DatasetReference"
+							},
+							"name": "DestinoRawMetasParquet"
+						}
+					],
+					"transformations": [
+						{
+							"name": "derivedColumn1"
+						},
+						{
+							"name": "FiltrarRegistrosValidos"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          meta_id as string,",
+						"          t_id as string,",
+						"          anio as string,",
+						"          mes as string,",
+						"          categoria as string,",
+						"          meta_monto as string,",
+						"          fecha_corte as string,",
+						"          activo as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> OrigenMetasCSV",
+						"OrigenMetasCSV derive(meta_id = toInteger(meta_id),",
+						"          t_id = toInteger(t_id),",
+						"          anio = toInteger(anio),",
+						"          mes = toInteger(mes),",
+						"          meta_monto = toDecimal(meta_monto, 12, 2),",
+						"          activo = toBoolean(activo),",
+						"          fecha_ingesta_utc = currentTimestamp()) ~> derivedColumn1",
+						"derivedColumn1 filter(not(isNull(meta_id))&&not(isNull(t_id))) ~> FiltrarRegistrosValidos",
+						"FiltrarRegistrosValidos sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'parquet',",
+						"     partitionFileNames:['metas_tiendas.parquet'],",
+						"     truncate: true,",
+						"     umask: 0755,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> DestinoRawMetasParquet"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_adls_landing_metas_csv')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_raw_parquet_particionado')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_ingesta_incremental_erp_venta')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_asql_retail_ventas",
+								"type": "DatasetReference"
+							},
+							"name": "OrigenErpVenta"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_adls_raw_parquet_particionado",
+								"type": "DatasetReference"
+							},
+							"name": "DestinoRawVentaParquet"
+						}
+					],
+					"transformations": [
+						{
+							"name": "AgregarAuditorialIngesta"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          SalesOrderID as integer,",
+						"          RevisionNumber as integer,",
+						"          OrderDate as timestamp,",
+						"          DueDate as timestamp,",
+						"          ShipDate as timestamp,",
+						"          Status as integer,",
+						"          OnlineOrderFlag as boolean,",
+						"          SalesOrderNumber as string,",
+						"          PurchaseOrderNumber as string,",
+						"          AccountNumber as string,",
+						"          CustomerID as integer,",
+						"          ShipToAddressID as integer,",
+						"          BillToAddressID as integer,",
+						"          ShipMethod as string,",
+						"          CreditCardApprovalCode as string,",
+						"          SubTotal as decimal(19,4),",
+						"          TaxAmt as decimal(19,4),",
+						"          Freight as decimal(19,4),",
+						"          TotalDue as decimal(19,4),",
+						"          Comment as string,",
+						"          rowguid as string,",
+						"          ModifiedDate as timestamp",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     enableCdc: true,",
+						"     mode: 'read',",
+						"     skipInitialLoad: false,",
+						"     waterMarkColumn: 'ModifiedDate',",
+						"     isolationLevel: 'READ_UNCOMMITTED',",
+						"     format: 'table') ~> OrigenErpVenta",
+						"OrigenErpVenta derive(fecha_ingesta_utc = currentTimestamp(),",
+						"          origenSistema = 'AdvWorks:SalesLT.SalesOrderHeader') ~> AgregarAuditorialIngesta",
+						"AgregarAuditorialIngesta sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'parquet',",
+						"     umask: 0755,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> DestinoRawVentaParquet"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_asql_retail_ventas')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_raw_parquet_particionado')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_load_raw_csv_adls_pr1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_adls_landing_commission_csv",
+								"type": "DatasetReference"
+							},
+							"name": "inputEmployeeCommission"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_adls_parquet_pr1",
+								"type": "DatasetReference"
+							},
+							"name": "outputEmployeeCommission"
+						}
+					],
+					"transformations": [
+						{
+							"name": "select"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          empleado_id as string,",
+						"          {Nombre y Apellido} as string,",
+						"          {Comisión} as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false) ~> inputEmployeeCommission",
+						"inputEmployeeCommission select(mapColumn(",
+						"          employee_id = empleado_id,",
+						"          full_name = {Nombre y Apellido},",
+						"          commission = {Comisión}",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select",
+						"select sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'parquet',",
+						"     partitionFileNames:['employee_commission.parquet'],",
+						"     truncate: true,",
+						"     umask: 0755,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> outputEmployeeCommission"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_adls_landing_commission_csv')]",
+				"[concat(variables('factoryId'), '/datasets/ds_adls_parquet_pr1')]"
+			]
+		},
+		{
+			"name": "[concat(parameters('factoryName'), '/df_raw_curated_pr1')]",
+			"type": "Microsoft.DataFactory/factories/dataflows",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"type": "MappingDataFlow",
+				"typeProperties": {
+					"sources": [
+						{
+							"dataset": {
+								"referenceName": "ds_adls_parquet_pr1",
+								"type": "DatasetReference"
+							},
+							"name": "Title"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_adls_parquet_pr1",
+								"type": "DatasetReference"
+							},
+							"name": "employee"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_adls_parquet_pr1",
+								"type": "DatasetReference"
+							},
+							"name": "department"
+						},
+						{
+							"dataset": {
+								"referenceName": "ds_adls_parquet_pr1",
+								"type": "DatasetReference"
+							},
+							"name": "commission"
+						}
+					],
+					"sinks": [
+						{
+							"dataset": {
+								"referenceName": "ds_adls_parquet_pr1",
+								"type": "DatasetReference"
+							},
+							"name": "sink"
+						}
+					],
+					"transformations": [
+						{
+							"name": "cleanEmployee"
+						},
+						{
+							"name": "joinEmployeeDeparment"
+						},
+						{
+							"name": "cleanCommission"
+						},
+						{
+							"name": "joinEmployeeTitle"
+						},
+						{
+							"name": "joinEmployeeCommission"
+						},
+						{
+							"name": "calculateCommission1"
+						},
+						{
+							"name": "calculateCommission2"
+						},
+						{
+							"name": "calculateCommission3"
+						},
+						{
+							"name": "select"
+						}
+					],
+					"scriptLines": [
+						"source(output(",
+						"          cod_cargo as string,",
+						"          des_cargo as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'parquet') ~> Title",
+						"source(output(",
+						"          empleado_id as integer,",
+						"          tip_documento as string,",
+						"          num_documento as string,",
+						"          nom_empleado as string,",
+						"          ape_empleado as string,",
+						"          cod_cargo as string,",
+						"          cod_departamento as string,",
+						"          mnt_salario as decimal(38,18),",
+						"          mnt_tope_comision as decimal(38,18)",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'parquet') ~> employee",
+						"source(output(",
+						"          cod_departamento as string,",
+						"          des_departamento as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'parquet') ~> department",
+						"source(output(",
+						"          employee_id as string,",
+						"          full_name as string,",
+						"          commission as string",
+						"     ),",
+						"     allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     ignoreNoFilesFound: false,",
+						"     format: 'parquet') ~> commission",
+						"employee derive(mnt_salario = toDecimal(mnt_salario, 18, 2),",
+						"          mnt_tope_comision = toDecimal(mnt_tope_comision, 18, 2),",
+						"          documento = concat(tip_documento, '-', num_documento),",
+						"          nombre_completo = concat(nom_empleado, '-', ape_empleado)) ~> cleanEmployee",
+						"cleanEmployee, department join(employee@cod_departamento == department@cod_departamento,",
+						"     joinType:'left',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> joinEmployeeDeparment",
+						"commission derive(employee_id = toInteger(employee_id),",
+						"          commission = toDecimal(commission, 18, 2)) ~> cleanCommission",
+						"joinEmployeeDeparment, Title join(employee@cod_cargo == Title@cod_cargo,",
+						"     joinType:'left',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> joinEmployeeTitle",
+						"joinEmployeeTitle, cleanCommission join(empleado_id == employee_id,",
+						"     joinType:'left',",
+						"     matchType:'exact',",
+						"     ignoreSpaces: false,",
+						"     broadcast: 'auto')~> joinEmployeeCommission",
+						"joinEmployeeCommission derive(tope_aplicable = least(mnt_salario, mnt_tope_comision),",
+						"          mnt_comision_bruta = case(isNull(commission), toDecimal(0, 18, 2), commission)) ~> calculateCommission1",
+						"calculateCommission1 derive(mnt_comision_final = case(mnt_comision_bruta > tope_aplicable, tope_aplicable, mnt_comision_bruta),",
+						"          ind_tope_aplicado = case(mnt_comision_bruta > tope_aplicable, 'SI', 'NO')) ~> calculateCommission2",
+						"calculateCommission2 derive(mnt_total_pagar = mnt_salario + mnt_comision_final) ~> calculateCommission3",
+						"calculateCommission3 select(mapColumn(",
+						"          empleado_id,",
+						"          documento,",
+						"          nombre_completo,",
+						"          des_departamento,",
+						"          des_cargo,",
+						"          mnt_salario,",
+						"          mnt_tope_comision,",
+						"          mnt_comision_bruta,",
+						"          mnt_comision_final,",
+						"          ind_tope_aplicado,",
+						"          mnt_total_pagar",
+						"     ),",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true) ~> select",
+						"select sink(allowSchemaDrift: true,",
+						"     validateSchema: false,",
+						"     format: 'parquet',",
+						"     partitionFileNames:['final_commission.parquet'],",
+						"     truncate: true,",
+						"     umask: 0755,",
+						"     preCommands: [],",
+						"     postCommands: [],",
+						"     skipDuplicateMapInputs: true,",
+						"     skipDuplicateMapOutputs: true,",
+						"     partitionBy('hash', 1)) ~> sink"
+					]
+				}
+			},
+			"dependsOn": [
+				"[concat(variables('factoryId'), '/datasets/ds_adls_parquet_pr1')]"
+			]
+		}
+	]
+}

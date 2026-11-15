@@ -1,0 +1,171 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "az-dmc-dev-dfc-mac-data"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "[concat(parameters('factoryName'), '/pl_raw_curated_pr1')]",
+			"type": "Microsoft.DataFactory/factories/pipelines",
+			"apiVersion": "2018-06-01",
+			"properties": {
+				"activities": [
+					{
+						"name": "LoadTablesPg",
+						"type": "ForEach",
+						"dependsOn": [],
+						"userProperties": [],
+						"typeProperties": {
+							"items": {
+								"value": "@createArray('cargo','empleado','departamento')",
+								"type": "Expression"
+							},
+							"isSequential": false,
+							"batchCount": 2,
+							"activities": [
+								{
+									"name": "pl_load_raw_pg_adls",
+									"type": "ExecutePipeline",
+									"dependsOn": [],
+									"policy": {
+										"secureInput": false
+									},
+									"userProperties": [],
+									"typeProperties": {
+										"pipeline": {
+											"referenceName": "pl_load_raw_pg_adls_pr1",
+											"type": "PipelineReference"
+										},
+										"waitOnCompletion": true,
+										"parameters": {
+											"p_schema": "rrhh",
+											"p_table": {
+												"value": "@item()",
+												"type": "Expression"
+											},
+											"p_layer": "raw"
+										}
+									}
+								}
+							]
+						}
+					},
+					{
+						"name": "df_load_raw_csv_adls",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_load_raw_csv_adls_pr1",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"inputEmployeeCommission": {},
+									"outputEmployeeCommission": {
+										"p_layer": "raw",
+										"p_origin": "csv",
+										"p_entity": "employee_commission"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					},
+					{
+						"name": "df_raw_curated",
+						"type": "ExecuteDataFlow",
+						"dependsOn": [
+							{
+								"activity": "LoadTablesPg",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							},
+							{
+								"activity": "df_load_raw_csv_adls",
+								"dependencyConditions": [
+									"Succeeded"
+								]
+							}
+						],
+						"policy": {
+							"timeout": "0.12:00:00",
+							"retry": 0,
+							"retryIntervalInSeconds": 30,
+							"secureOutput": false,
+							"secureInput": false
+						},
+						"userProperties": [],
+						"typeProperties": {
+							"dataflow": {
+								"referenceName": "df_raw_curated_pr1",
+								"type": "DataFlowReference",
+								"parameters": {},
+								"datasetParameters": {
+									"Title": {
+										"p_layer": "raw",
+										"p_origin": "rrhh",
+										"p_entity": "cargo"
+									},
+									"employee": {
+										"p_layer": "raw",
+										"p_origin": "rrhh",
+										"p_entity": "empleado"
+									},
+									"department": {
+										"p_layer": "raw",
+										"p_origin": "rrhh",
+										"p_entity": "departamento"
+									},
+									"commission": {
+										"p_layer": "raw",
+										"p_origin": "csv",
+										"p_entity": "employee_commission"
+									},
+									"sink": {
+										"p_layer": "curated",
+										"p_origin": "parquet",
+										"p_entity": "final_commission"
+									}
+								}
+							},
+							"staging": {},
+							"compute": {
+								"coreCount": 8,
+								"computeType": "General"
+							},
+							"traceLevel": "Fine"
+						}
+					}
+				],
+				"policy": {
+					"elapsedTimeMetric": {}
+				},
+				"annotations": [],
+				"lastPublishTime": "2026-11-15T18:41:07Z"
+			},
+			"dependsOn": []
+		}
+	]
+}

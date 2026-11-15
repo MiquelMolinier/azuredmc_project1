@@ -1,0 +1,174 @@
+{
+	"$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"type": "string",
+			"metadata": "Data Factory name",
+			"defaultValue": "az-dmc-dev-dfc-mac-data"
+		},
+		"ls_adls_datalake_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'ls_adls_datalake'"
+		},
+		"ls_adls_datalake_pr1_accountKey": {
+			"type": "secureString",
+			"metadata": "Secure string for 'accountKey' of 'ls_adls_datalake_pr1'"
+		},
+		"ls_asql_retail_advWorks_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'ls_asql_retail_advWorks'"
+		},
+		"ls_pg_retail_erp_df_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'ls_pg_retail_erp_df'"
+		},
+		"ls_pg_rrhh_pr1_password": {
+			"type": "secureString",
+			"metadata": "Secure string for 'password' of 'ls_pg_rrhh_pr1'"
+		},
+		"ls_adls_datalake_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://azdmcdevstgmac.dfs.core.windows.net/"
+		},
+		"ls_adls_datalake_pr1_properties_typeProperties_url": {
+			"type": "string",
+			"defaultValue": "https://azdmcdevstgmac.dfs.core.windows.net/"
+		},
+		"ls_asql_retail_advWorks_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "az-dmc-dev-sql-ade-data-mac.database.windows.net"
+		},
+		"ls_asql_retail_advWorks_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "az-dmc-dev-sqldb-ade-data"
+		},
+		"ls_asql_retail_advWorks_properties_typeProperties_userName": {
+			"type": "string",
+			"defaultValue": "dmc-azuresql-admin"
+		},
+		"ls_pg_retail_erp_df_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "mgg.vps.webdock.cloud"
+		},
+		"ls_pg_retail_erp_df_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "retail_erp_db"
+		},
+		"ls_pg_retail_erp_df_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "usr_student_azure"
+		},
+		"ls_pg_rrhh_pr1_properties_typeProperties_server": {
+			"type": "string",
+			"defaultValue": "mgg.vps.webdock.cloud"
+		},
+		"ls_pg_rrhh_pr1_properties_typeProperties_database": {
+			"type": "string",
+			"defaultValue": "dmc"
+		},
+		"ls_pg_rrhh_pr1_properties_typeProperties_username": {
+			"type": "string",
+			"defaultValue": "usr_ro_dmc_rrhh_estudiantes"
+		},
+		"containerUri": {
+			"type": "string",
+			"metadata": "URI to storage account containing linked ARM templates"
+		},
+		"containerSasToken": {
+			"type": "string",
+			"metadata": "Sas token to storage account containing linked ARM templates"
+		}
+	},
+	"variables": {
+		"factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+	},
+	"resources": [
+		{
+			"name": "az-dmc-dev-dfc-mac-data_ArmTemplate_0",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					},
+					"ls_adls_datalake_accountKey": {
+						"value": "[parameters('ls_adls_datalake_accountKey')]"
+					},
+					"ls_adls_datalake_pr1_accountKey": {
+						"value": "[parameters('ls_adls_datalake_pr1_accountKey')]"
+					},
+					"ls_asql_retail_advWorks_password": {
+						"value": "[parameters('ls_asql_retail_advWorks_password')]"
+					},
+					"ls_pg_retail_erp_df_password": {
+						"value": "[parameters('ls_pg_retail_erp_df_password')]"
+					},
+					"ls_pg_rrhh_pr1_password": {
+						"value": "[parameters('ls_pg_rrhh_pr1_password')]"
+					},
+					"ls_adls_datalake_properties_typeProperties_url": {
+						"value": "[parameters('ls_adls_datalake_properties_typeProperties_url')]"
+					},
+					"ls_adls_datalake_pr1_properties_typeProperties_url": {
+						"value": "[parameters('ls_adls_datalake_pr1_properties_typeProperties_url')]"
+					},
+					"ls_asql_retail_advWorks_properties_typeProperties_server": {
+						"value": "[parameters('ls_asql_retail_advWorks_properties_typeProperties_server')]"
+					},
+					"ls_asql_retail_advWorks_properties_typeProperties_database": {
+						"value": "[parameters('ls_asql_retail_advWorks_properties_typeProperties_database')]"
+					},
+					"ls_asql_retail_advWorks_properties_typeProperties_userName": {
+						"value": "[parameters('ls_asql_retail_advWorks_properties_typeProperties_userName')]"
+					},
+					"ls_pg_retail_erp_df_properties_typeProperties_server": {
+						"value": "[parameters('ls_pg_retail_erp_df_properties_typeProperties_server')]"
+					},
+					"ls_pg_retail_erp_df_properties_typeProperties_database": {
+						"value": "[parameters('ls_pg_retail_erp_df_properties_typeProperties_database')]"
+					},
+					"ls_pg_retail_erp_df_properties_typeProperties_username": {
+						"value": "[parameters('ls_pg_retail_erp_df_properties_typeProperties_username')]"
+					},
+					"ls_pg_rrhh_pr1_properties_typeProperties_server": {
+						"value": "[parameters('ls_pg_rrhh_pr1_properties_typeProperties_server')]"
+					},
+					"ls_pg_rrhh_pr1_properties_typeProperties_database": {
+						"value": "[parameters('ls_pg_rrhh_pr1_properties_typeProperties_database')]"
+					},
+					"ls_pg_rrhh_pr1_properties_typeProperties_username": {
+						"value": "[parameters('ls_pg_rrhh_pr1_properties_typeProperties_username')]"
+					}
+				}
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "az-dmc-dev-dfc-mac-data_ArmTemplate_1",
+			"type": "Microsoft.Resources/deployments",
+			"apiVersion": "2024-03-01",
+			"properties": {
+				"mode": "incremental",
+				"templateLink": {
+					"uri": "[concat(parameters('containerUri'), '/ArmTemplate_1.json', parameters('containerSasToken'))]",
+					"contentVersion": "1.0.0.0"
+				},
+				"parameters": {
+					"factoryName": {
+						"value": "[parameters('factoryName')]"
+					}
+				}
+			},
+			"dependsOn": [
+				"[resourceId('Microsoft.Resources/deployments', 'az-dmc-dev-dfc-mac-data_ArmTemplate_0')]"
+			]
+		}
+	]
+}

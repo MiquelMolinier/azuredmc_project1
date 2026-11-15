@@ -1,0 +1,57 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"factoryName": {
+			"value": "az-dmc-dev-dfc-mac-data"
+		},
+		"ls_adls_datalake_accountKey": {
+			"value": ""
+		},
+		"ls_adls_datalake_pr1_accountKey": {
+			"value": ""
+		},
+		"ls_asql_retail_advWorks_password": {
+			"value": ""
+		},
+		"ls_pg_retail_erp_df_password": {
+			"value": ""
+		},
+		"ls_pg_rrhh_pr1_password": {
+			"value": ""
+		},
+		"ls_adls_datalake_properties_typeProperties_url": {
+			"value": "https://azdmcdevstgmac.dfs.core.windows.net/"
+		},
+		"ls_adls_datalake_pr1_properties_typeProperties_url": {
+			"value": "https://azdmcdevstgmac.dfs.core.windows.net/"
+		},
+		"ls_asql_retail_advWorks_properties_typeProperties_server": {
+			"value": "az-dmc-dev-sql-ade-data-mac.database.windows.net"
+		},
+		"ls_asql_retail_advWorks_properties_typeProperties_database": {
+			"value": "az-dmc-dev-sqldb-ade-data"
+		},
+		"ls_asql_retail_advWorks_properties_typeProperties_userName": {
+			"value": "dmc-azuresql-admin"
+		},
+		"ls_pg_retail_erp_df_properties_typeProperties_server": {
+			"value": "mgg.vps.webdock.cloud"
+		},
+		"ls_pg_retail_erp_df_properties_typeProperties_database": {
+			"value": "retail_erp_db"
+		},
+		"ls_pg_retail_erp_df_properties_typeProperties_username": {
+			"value": "usr_student_azure"
+		},
+		"ls_pg_rrhh_pr1_properties_typeProperties_server": {
+			"value": "mgg.vps.webdock.cloud"
+		},
+		"ls_pg_rrhh_pr1_properties_typeProperties_database": {
+			"value": "dmc"
+		},
+		"ls_pg_rrhh_pr1_properties_typeProperties_username": {
+			"value": "usr_ro_dmc_rrhh_estudiantes"
+		}
+	}
+}
